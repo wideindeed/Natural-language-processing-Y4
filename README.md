@@ -20,7 +20,7 @@ This project implements a complete NLP pipeline for analyzing movie reviews in E
 
 2.  **Setup Data:**
     * Read `Data_Pointers.txt`.
-    * Download `IMDB Dataset.csv` and `ar_reviews_100k.tsv` from the links provided.
+    * Download `IMDB Dataset.csv` and `ar_reviews_100k.tsv` from the links provided (inside the Data_Pointers.txt file).
     * Place them in the **root** folder of this project.
 
 3.  **Create and Activate Virtual Environment:**
