@@ -3,7 +3,9 @@ IMDB Dataset.csv
 ar_reviews_100k.tsv
 pipline_results.json
 
-
 # Ignore virtual environment
 venv/
 __pycache__/
+
+# Ignore misc.
+.qodo
