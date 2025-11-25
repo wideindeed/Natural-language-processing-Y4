@@ -1,4 +1,6 @@
 import nltk
+import json
+from datetime import datetime
 
 nltk.download('punkt', quiet=True)
 nltk.download('punkt_tab', quiet=True)
@@ -6,10 +8,6 @@ nltk.download('stopwords', quiet=True)
 nltk.download('wordnet', quiet=True)
 nltk.download('averaged_perceptron_tagger', quiet=True)
 nltk.download('averaged_perceptron_tagger_eng', quiet=True)
-
-# ============================================================================
-# Import Libraries
-# ============================================================================
 
 import pandas as pd
 import numpy as np
@@ -32,6 +30,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, classification_report
 from xgboost import XGBClassifier
+from sklearn.preprocessing import LabelEncoder
 
 import pyarabic.araby as araby
 from camel_tools.disambig.mle import MLEDisambiguator
@@ -42,13 +41,7 @@ import seaborn as sns
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-
-# ============================================================================
-# Data Loader Class
-# ============================================================================
-
 class MultilingualDataLoader:
-    """Load and manage multilingual movie review datasets from real files."""
 
     def __init__(self):
         self.data_files = {
@@ -57,7 +50,6 @@ class MultilingualDataLoader:
         }
 
     def load_imdb_dataset(self, language: str = "english", n_samples: int = 2000) -> pd.DataFrame:
-        """Load IMDB movie reviews dataset from local files."""
         filepath = self.data_files.get(language)
         if not filepath:
             logger.error(f"No file path defined for language: {language}")
@@ -106,7 +98,6 @@ class MultilingualDataLoader:
     def create_train_test_split(self, df: pd.DataFrame,
                                 train_ratio: float = 0.8,
                                 dev_ratio: float = 0.1) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        """Split data into train, dev, and test sets."""
         df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
         n = len(df)
@@ -119,15 +110,8 @@ class MultilingualDataLoader:
 
         logger.info(f"Split sizes - Train: {len(train)}, Dev: {len(dev)}, Test: {len(test)}")
         return train, dev, test
-
-
-# ============================================================================
-# Preprocessor Class
-# ============================================================================
-
+    
 class MultilingualPreprocessor:
-    """Preprocessing pipeline for English and Arabic text."""
-
     def __init__(self):
         self.lemmatizer = WordNetLemmatizer()
         self.stemmer = PorterStemmer()
@@ -145,14 +129,12 @@ class MultilingualPreprocessor:
             self.arabic_pos_tagger = None
 
     def clean_text(self, text: str, language: str = 'english') -> str:
-        """Clean and normalize text."""
         if language == 'english':
             return self._clean_english(text)
         else:
             return self._clean_arabic(text)
 
     def _clean_english(self, text: str) -> str:
-        """Clean English text."""
         text = text.lower()
         text = re.sub(r'http\S+|www\S+', '', text)
         text = re.sub(r'\S+@S+', '', text)
@@ -168,30 +150,25 @@ class MultilingualPreprocessor:
         return text
 
     def tokenize(self, text: str, language: str = 'english') -> List[str]:
-        """Tokenize text into words."""
         if language == 'english':
             return word_tokenize(text)
         else:
             return araby.tokenize(text)
 
     def sentence_tokenize(self, text: str, language: str = 'english') -> List[str]:
-        """Tokenize text into sentences."""
         return sent_tokenize(text, language=language if language == 'english' else 'arabic')
 
     def remove_stopwords(self, tokens: List[str], language: str = 'english') -> List[str]:
-        """Remove stopwords from tokens."""
         stop_words = self.stop_words.get(language, set())
         return [token for token in tokens if token not in stop_words]
 
     def lemmatize(self, tokens: List[str], language: str = 'english') -> List[str]:
-        """Lemmatize tokens."""
         if language == 'english':
             return [self.lemmatizer.lemmatize(token) for token in tokens]
         else:
             return [araby.strip_tashkeel(token) for token in tokens]
 
     def pos_tag(self, tokens: List[str], language: str = 'english') -> List[Tuple[str, str]]:
-        """Perform Part-of-Speech tagging."""
         if language == 'english':
             return nltk_pos_tag(tokens)
         elif language == 'arabic' and self.arabic_pos_tagger:
@@ -218,7 +195,6 @@ class MultilingualPreprocessor:
                             remove_stops: bool = True,
                             lemmatize: bool = True,
                             do_pos_tag: bool = False) -> Dict:
-        """Full preprocessing pipeline."""
         cleaned = self.clean_text(text, language)
         sentences = self.sentence_tokenize(cleaned, language)
         tokens = self.tokenize(cleaned, language)
@@ -243,15 +219,8 @@ class MultilingualPreprocessor:
             'n_tokens': len(tokens),
             'n_sentences': len(sentences)
         }
-
-
-# ============================================================================
-# N-gram Language Model Class
-# ============================================================================
-
+    
 class NGramLanguageModel:
-    """N-gram language model with improved stability and token handling."""
-
     def __init__(self, n: int = 3, smoothing: str = 'kneser_ney'):
         self.n = n
         self.smoothing = smoothing
@@ -261,7 +230,6 @@ class NGramLanguageModel:
         self.vocab_size = 0
 
     def train(self, corpus: List[List[str]]):
-        """Train the language model on a corpus."""
         logger.info(f"Training {self.n}-gram model with {self.smoothing} smoothing")
 
         corpus = [['<s>'] * (self.n - 1) + sent + ['</s>'] for sent in corpus]
@@ -296,7 +264,6 @@ class NGramLanguageModel:
         return contexts_with_word / total_contexts if total_contexts > 0 else 1e-8
 
     def _kneser_ney_probability(self, context: Tuple[str], word: str, d: float = 0.75) -> float:
-        """Kneser-Ney smoothing with floor to prevent zeros."""
         context_count = self.context_counts.get(context, 0)
         if context_count == 0:
             return 1.0 / self.vocab_size
@@ -314,7 +281,6 @@ class NGramLanguageModel:
         return self._mle_probability(context, word)
 
     def calculate_perplexity(self, test_corpus: List[List[str]]) -> float:
-        """Stable perplexity computation with padding consistency."""
         log_prob_sum = 0
         word_count = 0
         padded_corpus = []
@@ -337,42 +303,26 @@ class NGramLanguageModel:
         perplexity = 2 ** (-avg_log_prob)
         return perplexity
 
-
-# ============================================================================
-# Named Entity Recognition Class
-# ============================================================================
-
-
 class NamedEntityRecognizer:
-    """Named Entity Recognition using NLTK's built-in ne_chunk."""
-
     def __init__(self, language: str = 'english'):
         self.language = language
-        # Ensure necessary NLTK data is downloaded
-        import nltk
         try:
-            # Check for the specific 'tab' resource that caused your error
             nltk.data.find('chunkers/maxent_ne_chunker_tab')
             nltk.data.find('words')
         except LookupError:
-            # Download the missing resources
             nltk.download('maxent_ne_chunker_tab', quiet=True)
-            nltk.download('maxent_ne_chunker', quiet=True)  # Good to have both
+            nltk.download('maxent_ne_chunker', quiet=True)  
             nltk.download('words', quiet=True)
 
     def extract_entities(self, text: str, tokens: List[str] = None) -> List[Tuple[str, str, int, int]]:
-        """Extract named entities from text using NLTK."""
         if self.language != 'english':
-            # NLTK NER is primarily for English.
             return []
 
         if not tokens:
             tokens = word_tokenize(text)
 
-        # Tag tokens
         tags = nltk_pos_tag(tokens)
 
-        # Extract entities using ne_chunk
         try:
             chunks = nltk.ne_chunk(tags)
         except Exception as e:
@@ -387,7 +337,6 @@ class NamedEntityRecognizer:
                 entity_name = " ".join(c[0] for c in chunk)
                 entity_type = chunk.label()
 
-                # Simple approximation for start/end position
                 start = text.find(entity_name, current_pos)
                 if start != -1:
                     end = start + len(entity_name)
@@ -395,40 +344,28 @@ class NamedEntityRecognizer:
                     current_pos = end
             else:
                 word = chunk[0]
-                # Advance position safely
                 next_pos = text.find(word, current_pos)
                 if next_pos != -1:
                     current_pos = next_pos + len(word)
 
         return entities
-
-
-# ============================================================================
-# Baseline Parser (Chunker)
-# ============================================================================
-
+    
 class BaselineParser:
-    """Baseline parser using NLTK's RegexpParser for chunking."""
 
     def __init__(self, language: str = 'english'):
         self.language = language
         self.grammar = self._define_grammar()
 
     def _define_grammar(self) -> str:
-        """Define chunking grammar."""
         if self.language == 'english':
-            # English NP: Determiner? + Adjective* + Noun+
             return r"NP: {<DT>?<JJ.*>*<NN.*>+}"
         elif self.language == 'arabic':
-            # Arabic NP: Noun+ + Adjective* (Matches standard Arabic Noun-Adj order)
-            # Note: This regex matches CAMeL tools tags like 'noun', 'adj', 'noun_prop'
             return r"NP: {<noun.*|noun_prop>+<adj.*>*}"
         else:
             logger.warning(f"No chunking grammar defined for {self.language}")
             return ""
 
     def chunk(self, pos_tagged_tokens: List[Tuple[str, str]]) -> Tree:
-        """Apply chunking to POS-tagged tokens."""
         if not self.grammar:
             return Tree('S', pos_tagged_tokens)
         try:
@@ -438,18 +375,9 @@ class BaselineParser:
         except Exception as e:
             logger.error(f"Error during parsing: {e}")
             return Tree('S', pos_tagged_tokens)
-
-
-# ============================================================================
-# Sentiment Classifier Class
-# ============================================================================
-
-from sklearn.preprocessing import LabelEncoder
-
+        
 
 class SentimentClassifier:
-    """Ensemble sentiment classifier for movie reviews."""
-
     def __init__(self, language: str = 'english'):
         self.language = language
         self.vectorizer = TfidfVectorizer(
@@ -466,12 +394,10 @@ class SentimentClassifier:
             max_depth=5,
             learning_rate=0.1,
             random_state=42,
-            use_label_encoder=False,
             eval_metric='logloss'
         )
 
     def train(self, X_train: List[str], y_train: List[str]):
-        """Train the sentiment classifier."""
         logger.info(f"Training sentiment classifier for {self.language}")
         y_train_encoded = self.label_encoder.fit_transform(y_train)
         X_train_vec = self.vectorizer.fit_transform(X_train)
@@ -484,7 +410,6 @@ class SentimentClassifier:
         logger.info("Training completed")
 
     def predict(self, X_test: List[str], use_ensemble: bool = True) -> np.ndarray:
-        """Predict sentiment for test data."""
         X_test_vec = self.vectorizer.transform(X_test)
 
         if use_ensemble:
@@ -502,7 +427,6 @@ class SentimentClassifier:
             return self.svm_classifier.predict(X_test_vec)
 
     def evaluate(self, X_test: List[str], y_test: List[str]) -> Dict:
-        """Evaluate the classifier."""
         predictions = self.predict(X_test)
         accuracy = accuracy_score(y_test, predictions)
         precision, recall, f1, _ = precision_recall_fscore_support(
@@ -515,14 +439,8 @@ class SentimentClassifier:
             'f1_score': f1,
             'classification_report': classification_report(y_test, predictions, zero_division=0)
         }
-
-
-# ============================================================================
-# Main Pipeline Execution
-# ============================================================================
-
+    
 def run_complete_pipeline():
-    """Main pipeline execution."""
     logger.info("MULTILINGUAL MOVIE REVIEWS NLP PIPELINE")
 
     data_loader = MultilingualDataLoader()
@@ -638,17 +556,10 @@ def run_complete_pipeline():
 
     return results
 
-
 results = run_complete_pipeline()
-
-# ============================================================================
-# Visualize Results
-# ============================================================================
-
 languages = list(results.keys())
 accuracies = [results[lang]['sentiment_analysis']['accuracy'] for lang in languages]
 f1_scores = [results[lang]['sentiment_analysis']['f1_score'] for lang in languages]
-
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 x = np.arange(len(languages))
@@ -682,10 +593,6 @@ axes[1].set_yscale('log')
 plt.tight_layout()
 plt.show()
 
-# ============================================================================
-# MODIFIED VISUALIZATION SECTION
-# ============================================================================
-
 fig_pos, axes_pos = plt.subplots(1, 2, figsize=(14, 6))
 fig_pos.suptitle('Top 10 Most Common POS Tags by Language (from Test Set)', fontsize=16)
 
@@ -697,7 +604,6 @@ try:
         counts = list(counts)
         ticks = np.arange(len(labels))
 
-        # Changed from barplot to scatterplot
         sns.scatterplot(
             x=counts,
             y=ticks,
@@ -728,11 +634,9 @@ try:
         labels = list(labels)
         counts = list(counts)
 
-        # Set font that supports Arabic glyphs
         plt.rcParams['font.family'] = ['Arial', 'sans-serif']
         ticks = np.arange(len(labels))
 
-        # Changed from barplot to scatterplot
         sns.scatterplot(
             x=counts,
             y=ticks,
@@ -758,15 +662,6 @@ except Exception as e:
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.show()
-
-# ============================================================================
-# END OF MODIFIED SECTION
-# ============================================================================
-
-
-# ============================================================================
-# Test Individual Components
-# ============================================================================
 
 logger.info("TESTING INDIVIDUAL COMPONENTS")
 
@@ -802,10 +697,6 @@ tree3 = parser.chunk(tags3)
 
 logger.info(f"Text: {test_text3}")
 logger.info(f"Parse Tree:\n{tree3}")
-
-# ============================================================================
-# Display Summary Statistics
-# ============================================================================
 
 logger.info("DETAILED STATISTICS")
 
@@ -856,10 +747,6 @@ if diff > 0:
 else:
     logger.info(f"Arabic performs {abs(diff) * 100:.2f}% better")
 
-# ============================================================================
-# Error Analysis
-# ============================================================================
-
 logger.info("ERROR ANALYSIS")
 
 data_loader = MultilingualDataLoader()
@@ -895,13 +782,6 @@ logger.info(f"  Errors: {total_errors}")
 logger.info(f"  Error rate: {error_rate:.2%}")
 logger.info(f"  Accuracy: {1 - error_rate:.2%}")
 
-# ============================================================================
-# Save Results
-# ============================================================================
-
-import json
-from datetime import datetime
-
 logger.info("SAVING RESULTS")
 
 save_data = {
@@ -934,13 +814,7 @@ logger.info(f"Average Sentiment Accuracy: {save_data['summary']['average_sentime
 logger.info(f"Best Language Model Perplexity: {save_data['summary']['best_perplexity']:.2f}")
 logger.info(f"Languages Supported: {', '.join(save_data['summary']['languages']).title()}")
 
-
-# ============================================================================
-# Quick Test Function
-# ============================================================================
-
 def analyze_review(text, language='english'):
-    """Quick function to analyze a single review."""
     logger.info("REVIEW ANALYSIS")
 
     preprocessor = MultilingualPreprocessor()
@@ -1004,7 +878,6 @@ def analyze_review(text, language='english'):
         'tokens': processed['tokens'],
         'entities': entities
     }
-
 
 logger.info("TEST EXAMPLES:")
 
