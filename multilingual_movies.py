@@ -342,52 +342,64 @@ class NGramLanguageModel:
 # Named Entity Recognition Class
 # ============================================================================
 
+
 class NamedEntityRecognizer:
-    """Named Entity Recognition for movie domain."""
+    """Named Entity Recognition using NLTK's built-in ne_chunk."""
 
     def __init__(self, language: str = 'english'):
         self.language = language
-        self.gazetteers = self._load_gazetteers()
+        # Ensure necessary NLTK data is downloaded
+        import nltk
+        try:
+            # Check for the specific 'tab' resource that caused your error
+            nltk.data.find('chunkers/maxent_ne_chunker_tab')
+            nltk.data.find('words')
+        except LookupError:
+            # Download the missing resources
+            nltk.download('maxent_ne_chunker_tab', quiet=True)
+            nltk.download('maxent_ne_chunker', quiet=True)  # Good to have both
+            nltk.download('words', quiet=True)
 
-    def _load_gazetteers(self) -> Dict[str, set]:
-        """Load domain-specific gazetteers."""
-        gazetteers = {
-            'ACTOR': {
-                'Leonardo DiCaprio', 'Meryl Streep', 'Tom Hanks',
-                'Scarlett Johansson', 'Denzel Washington', 'Brad Pitt',
-                'ليوناردو دي كابريو', 'ميريل ستريب', 'توم هانكس'
-            },
-            'DIRECTOR': {
-                'Christopher Nolan', 'Steven Spielberg', 'Martin Scorsese',
-                'Quentin Tarantino', 'James Cameron',
-                'كريستوفر نولان', 'ستيفن سبيلبرغ', 'مارتن سكورسيزي'
-            },
-            'MOVIE': {
-                'Inception', 'The Departed', 'Interstellar', 'Titanic',
-                'Pulp Fiction', 'Schindler\'s List',
-                'إنسبشن', 'تايتانك', 'قائمة شندلر'
-            },
-            'STUDIO': {
-                'Warner Bros', 'Universal Pictures', 'Paramount',
-                'Disney', 'Sony Pictures', '20th Century Fox'
-            }
-        }
-        return gazetteers
+    def extract_entities(self, text: str, tokens: List[str] = None) -> List[Tuple[str, str, int, int]]:
+        """Extract named entities from text using NLTK."""
+        if self.language != 'english':
+            # NLTK NER is primarily for English.
+            return []
 
-    def extract_entities(self, text: str, tokens: List[str]) -> List[Tuple[str, str, int, int]]:
-        """Extract named entities from text."""
+        if not tokens:
+            tokens = word_tokenize(text)
+
+        # Tag tokens
+        tags = nltk_pos_tag(tokens)
+
+        # Extract entities using ne_chunk
+        try:
+            chunks = nltk.ne_chunk(tags)
+        except Exception as e:
+            logger.warning(f"NER failed: {e}")
+            return []
+
         entities = []
-        for entity_type, names in self.gazetteers.items():
-            for name in names:
-                pattern = re.escape(name)
-                for match in re.finditer(pattern, text, re.IGNORECASE):
-                    entities.append((
-                        match.group(),
-                        entity_type,
-                        match.start(),
-                        match.end()
-                    ))
-        entities = sorted(set(entities), key=lambda x: x[2])
+        current_pos = 0
+
+        for chunk in chunks:
+            if hasattr(chunk, 'label'):
+                entity_name = " ".join(c[0] for c in chunk)
+                entity_type = chunk.label()
+
+                # Simple approximation for start/end position
+                start = text.find(entity_name, current_pos)
+                if start != -1:
+                    end = start + len(entity_name)
+                    entities.append((entity_name, entity_type, start, end))
+                    current_pos = end
+            else:
+                word = chunk[0]
+                # Advance position safely
+                next_pos = text.find(word, current_pos)
+                if next_pos != -1:
+                    current_pos = next_pos + len(word)
+
         return entities
 
 
@@ -405,7 +417,12 @@ class BaselineParser:
     def _define_grammar(self) -> str:
         """Define chunking grammar."""
         if self.language == 'english':
+            # English NP: Determiner? + Adjective* + Noun+
             return r"NP: {<DT>?<JJ.*>*<NN.*>+}"
+        elif self.language == 'arabic':
+            # Arabic NP: Noun+ + Adjective* (Matches standard Arabic Noun-Adj order)
+            # Note: This regex matches CAMeL tools tags like 'noun', 'adj', 'noun_prop'
+            return r"NP: {<noun.*|noun_prop>+<adj.*>*}"
         else:
             logger.warning(f"No chunking grammar defined for {self.language}")
             return ""

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-31 12:52:11",
+  "timestamp": "2025-11-25 19:55:25",
   "project": "Multilingual Movie Reviews NLP Pipeline",
   "course": "CSAI411 - Introduction to Natural Language Processing",
   "results": {
@@ -108,13 +108,13 @@
         }
       },
       "sentiment_analysis": {
-        "accuracy": 0.825,
-        "precision": 0.8274992713494608,
-        "recall": 0.825,
-        "f1_score": 0.8233421183845003
+        "accuracy": 0.8333333333333334,
+        "precision": 0.8337142857142859,
+        "recall": 0.8333333333333334,
+        "f1_score": 0.8325791855203619
       },
       "ner": {
-        "sample_entities": 0
+        "sample_entities": 14
       }
     },
     "arabic": {
@@ -205,7 +205,7 @@
         ]
       },
       "parsing": {
-        "sample_tree_str": "(S\n  لا/part_neg\n  تصلح/verb\n  روايه/noun\n  ولا/part_neg\n  كتاب/noun\n  ببساطه/noun\n  عباره/noun\n  عن/prep\n  كتاب/noun\n  جنسي/adj\n  ليوسف/noun_prop\n  زيدان/noun_prop\n  ../punc\n  اسلوبه/noun\n  اصبح/verb\n  منحط/adj\n  لابعد/adj\n  الحدود/noun\n  لا/part_neg\n  اعرف/verb\n  لماذا/adv_interrog\n  يصمم/verb\n  يوسف/noun_prop\n  زيدان/noun_prop\n  علي/prep\n  الحشو/noun\n  الجنسي/adj\n  في/prep\n  الاسلوب/noun\n  الكتابي/adj\n  والاستفاضه/noun\n  في/prep\n  التوضيح/noun)"
+        "sample_tree_str": "(S\n  لا/part_neg\n  تصلح/verb\n  (NP روايه/noun)\n  ولا/part_neg\n  (NP كتاب/noun ببساطه/noun عباره/noun)\n  عن/prep\n  (NP كتاب/noun جنسي/adj)\n  (NP ليوسف/noun_prop زيدان/noun_prop)\n  ../punc\n  (NP اسلوبه/noun)\n  اصبح/verb\n  منحط/adj\n  لابعد/adj\n  (NP الحدود/noun)\n  لا/part_neg\n  اعرف/verb\n  لماذا/adv_interrog\n  يصمم/verb\n  (NP يوسف/noun_prop زيدان/noun_prop)\n  علي/prep\n  (NP الحشو/noun الجنسي/adj)\n  في/prep\n  (NP الاسلوب/noun الكتابي/adj)\n  (NP والاستفاضه/noun)\n  في/prep\n  (NP التوضيح/noun))"
       },
       "language_model": {
         "2-gram": {
@@ -222,10 +222,10 @@
         }
       },
       "sentiment_analysis": {
-        "accuracy": 0.7416666666666667,
-        "precision": 0.7435672514619883,
-        "recall": 0.7416666666666667,
-        "f1_score": 0.7421537816886655
+        "accuracy": 0.75,
+        "precision": 0.7511160714285714,
+        "recall": 0.75,
+        "f1_score": 0.7503496503496504
       },
       "ner": {
         "sample_entities": 0
@@ -238,7 +238,7 @@
       "arabic"
     ],
     "total_reviews": 2400,
-    "average_sentiment_accuracy": 0.7833333333333333,
+    "average_sentiment_accuracy": 0.7916666666666667,
     "best_perplexity": 467.05822737570224
   }
 }
