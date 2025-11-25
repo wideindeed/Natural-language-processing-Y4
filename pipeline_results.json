@@ -1,0 +1,233 @@
+{
+  "timestamp": "2025-11-26 02:20:55",
+  "results": {
+    "english": {
+      "pos_tagging": {
+        "sample_tags": [
+          [
+            "i",
+            "NNS"
+          ],
+          [
+            "have",
+            "VBP"
+          ],
+          [
+            "been",
+            "VBN"
+          ],
+          [
+            "watching",
+            "VBG"
+          ],
+          [
+            "horror",
+            "NN"
+          ],
+          [
+            "movies",
+            "NNS"
+          ],
+          [
+            "since",
+            "IN"
+          ],
+          [
+            "i",
+            "NN"
+          ],
+          [
+            "was",
+            "VBD"
+          ],
+          [
+            "5",
+            "CD"
+          ]
+        ],
+        "top_10_tags": [
+          [
+            "NN",
+            6531
+          ],
+          [
+            "IN",
+            3650
+          ],
+          [
+            "DT",
+            3585
+          ],
+          [
+            "JJ",
+            2954
+          ],
+          [
+            "RB",
+            2113
+          ],
+          [
+            ",",
+            1407
+          ],
+          [
+            "NNS",
+            1402
+          ],
+          [
+            ".",
+            1392
+          ],
+          [
+            "VBZ",
+            1344
+          ],
+          [
+            "NNP",
+            1283
+          ]
+        ]
+      },
+      "parsing": {
+        "sample_tree_str": "(S\n  (NP i/NNS)\n  have/VBP\n  been/VBN\n  watching/VBG\n  (NP horror/NN movies/NNS)\n  since/IN\n  (NP i/NN)\n  was/VBD\n  5/CD\n  (NP years/NNS)\n  old/JJ\n  ,/,\n  beginning/VBG\n  with/IN\n  (NP childs/NNS play.since/NN)\n  then/RB\n  ,/,\n  (NP i/NNS)\n  have/VBP\n  seen/VBN\n  (NP good/JJ horror/NN movies/NNS)\n  and/CC\n  bad/JJ\n  ,/,\n  but/CC\n  this/DT\n  is/VBZ\n  without/IN\n  (NP question/NN)\n  ,/,\n  (NP the/DT dumbest/JJS movie/NN i/NN)\n  have/VBP\n  ever/RB\n  seen/VBN\n  !/.\n  (NP the/DT actors/NNS)\n  did/VBD\n  all/DT\n  they/PRP\n  could/MD\n  with/IN\n  (NP the/DT material/NN)\n  ./.\n  (NP the/DT plot/NN)\n  was/VBD\n  just/RB\n  idiotic/JJ\n  ./.\n  plus/CC\n  ,/,\n  it/PRP\n  was/VBD\n  just/RB\n  (NP all/DT gore/NN)\n  ./.\n  (NP i/NN)\n  can/MD\n  stomach/VB\n  (NP a/DT lot/NN)\n  of/IN\n  (NP blood/NN)\n  ,/,\n  but/CC\n  that/DT\n  was/VBD\n  just/RB\n  ridiculous/JJ\n  !/.\n  in/IN\n  one/CD\n  of/IN\n  (NP the/DT scenes/NNS)\n  ,/,\n  (NP a/DT character/NN)\n  gets/VBZ\n  stabbed/VBN\n  in/IN\n  (NP the/DT rear/JJ end/NN)\n  and/CC\n  choked/VBN\n  with/IN\n  his/PRP$\n  (NP intestines/NNS)\n  !/.\n  (NP plain/NN)\n  stupid/JJ\n  !/.\n  (NP another/DT problem/NN)\n  with/IN\n  (NP this/DT movie/NN)\n  is/VBZ\n  that/IN\n  its/PRP$\n  (NP boring/NN)\n  and/CC\n  probably/RB\n  (NP the/DT slowest/JJS movie/NN)\n  ever/RB\n  made/VBD\n  ./.\n  (NP the/DT end/NN)\n  of/IN\n  it/PRP\n  is/VBZ\n  just/RB\n  dumb/JJ\n  ./.\n  but/CC\n  then/RB\n  again/RB\n  ,/,\n  it/PRP\n  goes/VBZ\n  with/IN\n  (NP the/DT rest/NN)\n  of/IN\n  it/PRP\n  !/.\n  at/IN\n  (NP the/DT end/NN)\n  ,/,\n  when/WRB\n  (NP the/DT girl/NN)\n  gets/VBZ\n  away/RB\n  from/IN\n  (NP the/DT cannibal/ancestor/NN)\n  ,/,\n  she/PRP\n  receives/VBZ\n  (NP help/NN)\n  from/IN\n  (NP a/DT old/JJ lady/NN)\n  ./.\n  (NP the/DT old/JJ lady/NN)\n  is/VBZ\n  making/VBG\n  tea/JJ\n  ,/,\n  but/CC\n  when/WRB\n  she/PRP\n  turns/VBZ\n  around/RB\n  to/TO\n  talk/VB\n  to/TO\n  (NP the/DT girl/NN)\n  ,/,\n  (NP the/DT girl/NN)\n  attacks/VBZ\n  her/PRP$\n  !/.\n  she/PRP\n  turned/VBD\n  into/IN\n  (NP a/DT cannibal/NN)\n  !/.\n  (NP retarded/JJ movie/NN)\n  ./.)"
+      },
+      "language_model": {
+        "2-gram": {
+          "perplexity": 467.05822737570224,
+          "vocab_size": 7516
+        },
+        "3-gram": {
+          "perplexity": 2007.326456409863,
+          "vocab_size": 7516
+        },
+        "4-gram": {
+          "perplexity": 4165.023086494095,
+          "vocab_size": 7516
+        }
+      },
+      "sentiment_analysis": {
+        "accuracy": 0.825,
+        "precision": 0.8274992713494608,
+        "recall": 0.825,
+        "f1_score": 0.8233421183845003
+      },
+      "ner": {
+        "sample_entities": 14
+      }
+    },
+    "arabic": {
+      "pos_tagging": {
+        "sample_tags": [
+          [
+            "لا",
+            "part_neg"
+          ],
+          [
+            "تصلح",
+            "verb"
+          ],
+          [
+            "روايه",
+            "noun"
+          ],
+          [
+            "ولا",
+            "part_neg"
+          ],
+          [
+            "كتاب",
+            "noun"
+          ],
+          [
+            "ببساطه",
+            "noun"
+          ],
+          [
+            "عباره",
+            "noun"
+          ],
+          [
+            "عن",
+            "prep"
+          ],
+          [
+            "كتاب",
+            "noun"
+          ],
+          [
+            "جنسي",
+            "adj"
+          ]
+        ],
+        "top_10_tags": [
+          [
+            "noun",
+            2747
+          ],
+          [
+            "noun_prop",
+            1239
+          ],
+          [
+            "verb",
+            944
+          ],
+          [
+            "prep",
+            705
+          ],
+          [
+            "punc",
+            609
+          ],
+          [
+            "adj",
+            497
+          ],
+          [
+            "conj",
+            169
+          ],
+          [
+            "part_neg",
+            145
+          ],
+          [
+            "pron_rel",
+            124
+          ],
+          [
+            "pron_dem",
+            99
+          ]
+        ]
+      },
+      "parsing": {
+        "sample_tree_str": "(S\n  لا/part_neg\n  تصلح/verb\n  (NP روايه/noun)\n  ولا/part_neg\n  (NP كتاب/noun ببساطه/noun عباره/noun)\n  عن/prep\n  (NP كتاب/noun جنسي/adj)\n  (NP ليوسف/noun_prop زيدان/noun_prop)\n  ../punc\n  (NP اسلوبه/noun)\n  اصبح/verb\n  منحط/adj\n  لابعد/adj\n  (NP الحدود/noun)\n  لا/part_neg\n  اعرف/verb\n  لماذا/adv_interrog\n  يصمم/verb\n  (NP يوسف/noun_prop زيدان/noun_prop)\n  علي/prep\n  (NP الحشو/noun الجنسي/adj)\n  في/prep\n  (NP الاسلوب/noun الكتابي/adj)\n  (NP والاستفاضه/noun)\n  في/prep\n  (NP التوضيح/noun))"
+      },
+      "language_model": {
+        "2-gram": {
+          "perplexity": 28745.609618466257,
+          "vocab_size": 4786
+        },
+        "3-gram": {
+          "perplexity": 5886.039112643104,
+          "vocab_size": 4786
+        },
+        "4-gram": {
+          "perplexity": 4833.198931816,
+          "vocab_size": 4786
+        }
+      },
+      "sentiment_analysis": {
+        "accuracy": 0.7416666666666667,
+        "precision": 0.7435672514619883,
+        "recall": 0.7416666666666667,
+        "f1_score": 0.7421537816886655
+      },
+      "ner": {
+        "sample_entities": 0
+      }
+    }
+  }
+}

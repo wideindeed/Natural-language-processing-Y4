@@ -1,0 +1,15 @@
+DATASET POINTERS
+
+1. English Dataset (IMDB Dataset.csv)
+   - Source: Kaggle
+   - URL: https://www.kaggle.com/datasets/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews
+   - Instructions: Download 'IMDB Dataset.csv' and place it in the root project folder.
+
+2. Arabic Dataset (ar_reviews_100k.tsv)
+   - Source: GitHub / Taryk
+   - URL: https://github.com/taryk/arabic-reviews-dataset (or the specific link where you found it)
+   - Instructions: Download 'ar_reviews_100k.tsv' and place it in the root project folder.
+
+3. CAMeL Tools Data
+   - This project requires the CAMeL Tools data to be installed locally.
+   - Run command: camel_data -i light
