@@ -60,8 +60,8 @@ class MultilingualPreprocessor:
         else:
             return araby.tokenize(text)
 
-    def sentence_tokenize(self, text: str, language: str = 'english') -> List[str]:
-        return sent_tokenize(text, language=language if language == 'english' else 'arabic')
+    def sentence_tokenize(self, text: str) -> List[str]:
+        return sent_tokenize(text)
 
     def remove_stopwords(self, tokens: List[str], language: str = 'english') -> List[str]:
         stop_words = self.stop_words.get(language, set())
@@ -101,7 +101,7 @@ class MultilingualPreprocessor:
                             lemmatize: bool = True,
                             do_pos_tag: bool = False) -> Dict:
         cleaned = self.clean_text(text, language)
-        sentences = self.sentence_tokenize(cleaned, language)
+        sentences = self.sentence_tokenize(cleaned)
         tokens = self.tokenize(cleaned, language)
         full_tokens = tokens
 
