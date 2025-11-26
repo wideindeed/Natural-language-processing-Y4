@@ -7,7 +7,7 @@ DATASET POINTERS
 
 2. Arabic Dataset (ar_reviews_100k.tsv)
    - Source: GitHub / Taryk
-   - URL: https://github.com/taryk/arabic-reviews-dataset (or the specific link where you found it)
+   - URL: https://www.kaggle.com/datasets/mohannedmahmoud/ar-reviews-100k 
    - Instructions: Download 'ar_reviews_100k.tsv' and place it in the root project folder.
 
 3. CAMeL Tools Data
