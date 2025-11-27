@@ -4,27 +4,47 @@ import numpy as np
 from config import logger
 
 def plot_sentiment_performance(results, languages):
-    accuracies = [results[lang]['sentiment_analysis']['accuracy'] for lang in languages]
-    f1_scores = [results[lang]['sentiment_analysis']['f1_score'] for lang in languages]
     
-    fig, ax = plt.subplots(figsize=(7, 5))
-    x = np.arange(len(languages))
-    width = 0.35
-    
-    ax.bar(x - width / 2, accuracies, width, label='Accuracy', color='#3b82f6')
-    ax.bar(x + width / 2, f1_scores, width, label='F1-Score', color='#10b981')
-    
-    ax.set_xlabel('Language')
-    ax.set_ylabel('Score')
-    ax.set_title('Sentiment Analysis Performance by Language')
-    ax.set_xticks(x)
-    ax.set_xticklabels([lang.title() for lang in languages])
-    ax.legend()
-    ax.grid(axis='y', alpha=0.3)
-    ax.set_ylim([0, 1])
-    
-    plt.tight_layout()
-    plt.show()
+    for lang in languages:
+        data = results[lang]['sentiment_analysis']
+        if 'transformer' not in data:
+            continue 
+            
+        labels = ['Accuracy', 'F1-Score']
+        baseline_scores = [data['baseline']['accuracy'], data['baseline']['f1_score']]
+        transformer_scores = [data['transformer']['accuracy'], data['transformer']['f1_score']]
+        
+        model_name = "BERT" if lang == 'english' else "AraBERT"
+        
+        x = np.arange(len(labels))
+        width = 0.35
+        
+        fig, ax = plt.subplots(figsize=(8, 6))
+        rects1 = ax.bar(x - width/2, baseline_scores, width, label='Baseline (Ensemble)', color='#3b82f6')
+        rects2 = ax.bar(x + width/2, transformer_scores, width, label=f'{model_name} (Deep Learning)', color='#10b981')
+        
+        ax.set_ylabel('Score')
+        ax.set_title(f'{lang.title()} Model Comparison: Baseline vs {model_name}')
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels)
+        ax.set_ylim([0, 1.1])
+        ax.legend()
+        ax.grid(axis='y', alpha=0.3)
+        
+        def autolabel(rects):
+            for rect in rects:
+                height = rect.get_height()
+                ax.annotate(f'{height:.2%}',
+                            xy=(rect.get_x() + rect.get_width() / 2, height),
+                            xytext=(0, 3), 
+                            textcoords="offset points",
+                            ha='center', va='bottom', fontweight='bold')
+
+        autolabel(rects1)
+        autolabel(rects2)
+        
+        plt.tight_layout()
+        plt.show()
 
 def plot_perplexity_comparison(results):
     english_lm = results['english']['language_model']

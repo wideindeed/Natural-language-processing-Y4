@@ -10,6 +10,7 @@ from preprocessor import MultilingualPreprocessor
 from models import NGramLanguageModel, SentimentClassifier
 from nlp_tools import BaselineParser, NamedEntityRecognizer
 from visualization import plot_sentiment_performance, plot_perplexity_comparison, plot_pos_frequencies
+from models import NGramLanguageModel, SentimentClassifier, TransformerClassifier
 
 def run_complete_pipeline():
     logger.info("MULTILINGUAL MOVIE REVIEWS NLP PIPELINE")
@@ -27,11 +28,15 @@ def run_complete_pipeline():
         if df.empty:
             logger.error(f"Failed to load data for {language}. Skipping.")
             continue
+            
         train_df, dev_df, test_df = data_loader.create_train_test_split(df)
 
         logger.info("Preprocessing data")
         train_texts = train_df['text'].tolist()
         train_labels = train_df['sentiment'].tolist()
+
+        dev_texts = dev_df['text'].tolist()
+        dev_labels = dev_df['sentiment'].tolist()
 
         test_texts = test_df['text'].tolist()
         test_labels = test_df['sentiment'].tolist()
@@ -45,24 +50,17 @@ def run_complete_pipeline():
         sample_pos_tags = preprocessor.pos_tag(sample_tokens_full, language)
         chunk_tree = parser.chunk(sample_pos_tags)
 
-        logger.info(f"Sample POS tags (first 10): {sample_pos_tags[:10]}")
-        logger.info(f"Sample Parse Tree:\n{chunk_tree}")
-
-        logger.info(f"Calculating POS tag frequencies for {language} test set")
         all_tags = []
         test_tokens_list = [
             preprocessor.tokenize(preprocessor.clean_text(text, language), language)
             for text in test_texts
         ]
-
         for tokens in test_tokens_list:
             if tokens:
                 tags = preprocessor.pos_tag(tokens, language)
                 all_tags.extend([tag for word, tag in tags])
-
         tag_counts = Counter(all_tags)
         top_10_tags = tag_counts.most_common(10)
-        logger.info(f"Top 5 {language} POS tags: {top_10_tags[:5]}")
 
         results[language]['pos_tagging'] = {
             'sample_tags': sample_pos_tags[:10],
@@ -70,9 +68,8 @@ def run_complete_pipeline():
         }
         results[language]['parsing'] = {'sample_tree_str': str(chunk_tree)}
 
-        logger.info("Training language models")
+        logger.info("Training N-Gram language models")
         lm_results = {}
-
         def normalize_and_tokenize(text, language):
             cleaned = preprocessor.clean_text(text, language)
             tokens = preprocessor.tokenize(cleaned, language)
@@ -83,39 +80,49 @@ def run_complete_pipeline():
         for n in [2, 3, 4]:
             lm = NGramLanguageModel(n=n, smoothing='kneser_ney')
             train_corpus = [normalize_and_tokenize(text, language) for text in train_texts[:200]]
-            test_corpus = [normalize_and_tokenize(text, language) for text in test_df['text'].tolist()[:50]]
+            test_corpus = [normalize_and_tokenize(text, language) for text in test_texts[:50]]
 
             lm.train(train_corpus)
             perplexity = lm.calculate_perplexity(test_corpus)
-
-            lm_results[f'{n}-gram'] = {
-                'perplexity': perplexity,
-                'vocab_size': lm.vocab_size
-            }
+            lm_results[f'{n}-gram'] = {'perplexity': perplexity, 'vocab_size': lm.vocab_size}
             logger.info(f"{n}-gram perplexity: {perplexity:.2f}")
 
-        logger.info("Training sentiment classifier")
+        logger.info("Training BASELINE sentiment classifier (Ensemble)")
         sentiment_clf = SentimentClassifier(language=language)
         sentiment_clf.train(train_texts, train_labels)
+        baseline_metrics = sentiment_clf.evaluate(test_texts, test_labels)
+        logger.info(f"Baseline Accuracy: {baseline_metrics['accuracy']:.4f}")
 
-        sentiment_metrics = sentiment_clf.evaluate(test_texts, test_labels)
-
-        logger.info(f"Accuracy: {sentiment_metrics['accuracy']:.4f}")
-        logger.info(f"F1-Score: {sentiment_metrics['f1_score']:.4f}")
+        logger.info(f"Training DEEP LEARNING model ({language})")
+        if language == 'english':
+            model_name = "bert-base-uncased"
+        else:
+            model_name = "aubmindlab/bert-base-arabertv2"
+        
+        dl_classifier = TransformerClassifier(model_name=model_name)
+        dl_classifier.train(train_texts, train_labels, val_texts=dev_texts, val_labels=dev_labels)
+        dl_metrics = dl_classifier.evaluate(test_texts, test_labels)
+        logger.info(f"Deep Learning Accuracy: {dl_metrics['accuracy']:.4f}")
 
         logger.info("Performing Named Entity Recognition")
         ner = NamedEntityRecognizer(language=language)
         sample_text_ner = test_texts[0]
         sample_tokens_ner = preprocessor.tokenize(sample_text_ner, language)
         entities = ner.extract_entities(sample_text_ner, sample_tokens_ner)
-        logger.info(f"Sample NER Results: {len(entities)} entities found")
 
         results[language]['language_model'] = lm_results
+        
         results[language]['sentiment_analysis'] = {
-            'accuracy': sentiment_metrics['accuracy'],
-            'precision': sentiment_metrics['precision'],
-            'recall': sentiment_metrics['recall'],
-            'f1_score': sentiment_metrics['f1_score']
+            'baseline': {
+                'accuracy': baseline_metrics['accuracy'],
+                'precision': baseline_metrics['precision'],
+                'recall': baseline_metrics['recall'],
+                'f1_score': baseline_metrics['f1_score']
+            },
+            'transformer': {
+                'accuracy': dl_metrics['accuracy'],
+                'f1_score': dl_metrics['f1_score']
+            }
         }
         results[language]['ner'] = {'sample_entities': len(entities)}
 
@@ -123,8 +130,8 @@ def run_complete_pipeline():
     for lang, metrics in results.items():
         logger.info(f"\n{lang.upper()}:")
         logger.info(f"  Best Perplexity: {min(m['perplexity'] for m in metrics['language_model'].values()):.2f}")
-        logger.info(f"  Sentiment Accuracy: {metrics['sentiment_analysis']['accuracy']:.4f}")
-        logger.info(f"  Sentiment F1: {metrics['sentiment_analysis']['f1_score']:.4f}")
+        logger.info(f"  Baseline Acc:    {metrics['sentiment_analysis']['baseline']['accuracy']:.4f}")
+        logger.info(f"  Transformer Acc: {metrics['sentiment_analysis']['transformer']['accuracy']:.4f}")
 
     save_data = {
         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),

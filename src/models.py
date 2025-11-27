@@ -8,6 +8,10 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, classification_report
 from config import logger
 from typing import List, Dict, Tuple 
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments, DataCollatorWithPadding
+from datasets import Dataset
+import os
 
 class NGramLanguageModel:
     def __init__(self, n: int = 3, smoothing: str = 'kneser_ney'):
@@ -153,4 +157,81 @@ class SentimentClassifier:
             'recall': recall,
             'f1_score': f1,
             'classification_report': classification_report(y_test, predictions, zero_division=0)
+        }
+    
+class TransformerClassifier:
+    def __init__(self, model_name: str, num_labels: int = 2):
+        self.model_name = model_name
+        self.num_labels = num_labels
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=num_labels).to(self.device)
+        
+        os.environ["WANDB_DISABLED"] = "true"
+
+    def _tokenize_function(self, examples):
+        return self.tokenizer(examples["text"], truncation=True, padding="max_length", max_length=128)
+
+    def train(self, train_texts: List[str], train_labels: List[str], val_texts: List[str] = None, val_labels: List[str] = None):
+        logger.info(f"Training Transformer model: {self.model_name} on {self.device}")
+        
+        label_map = {'positive': 1, 'negative': 0}
+        train_y = [label_map[l.lower()] for l in train_labels]
+        
+        train_ds = Dataset.from_dict({'text': train_texts, 'label': train_y})
+        tokenized_train = train_ds.map(self._tokenize_function, batched=True)
+        
+        eval_ds = None
+        if val_texts and val_labels:
+            val_y = [label_map[l.lower()] for l in val_labels]
+            eval_ds = Dataset.from_dict({'text': val_texts, 'label': val_y})
+            eval_ds = eval_ds.map(self._tokenize_function, batched=True)
+
+        training_args = TrainingArguments(
+            output_dir=f"./results_{self.model_name.replace('/', '_')}",
+            learning_rate=2e-5,
+            per_device_train_batch_size=16,
+            per_device_eval_batch_size=16,
+            num_train_epochs=1, #To get more accurate results, try changeing this to 3 or 4 (Will take a LONG time tho)
+            weight_decay=0.01,
+            eval_strategy="epoch" if eval_ds else "no",
+            save_strategy="epoch",
+            load_best_model_at_end=True if eval_ds else False,
+            report_to="none",
+            use_cpu=False if self.device == "cuda" else True
+        )
+
+        def compute_metrics(eval_pred):
+            logits, labels = eval_pred
+            predictions = np.argmax(logits, axis=-1)
+            acc = accuracy_score(labels, predictions)
+            precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average='weighted')
+            return {'accuracy': acc, 'f1': f1}
+
+        self.trainer = Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=tokenized_train,
+            eval_dataset=eval_ds,
+            tokenizer=self.tokenizer,
+            data_collator=DataCollatorWithPadding(tokenizer=self.tokenizer),
+            compute_metrics=compute_metrics
+        )
+
+        self.trainer.train()
+
+    def evaluate(self, test_texts: List[str], test_labels: List[str]) -> Dict:
+        logger.info("Evaluating Transformer model...")
+        label_map = {'positive': 1, 'negative': 0}
+        test_y = [label_map[l.lower()] for l in test_labels]
+        
+        test_ds = Dataset.from_dict({'text': test_texts, 'label': test_y})
+        tokenized_test = test_ds.map(self._tokenize_function, batched=True)
+        
+        results = self.trainer.evaluate(tokenized_test)
+        
+        return {
+            'accuracy': results['eval_accuracy'],
+            'f1_score': results['eval_f1'],
+            'loss': results['eval_loss']
         }
