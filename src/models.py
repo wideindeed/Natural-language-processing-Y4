@@ -192,7 +192,7 @@ class TransformerClassifier:
             learning_rate=2e-5,
             per_device_train_batch_size=16,
             per_device_eval_batch_size=16,
-            num_train_epochs=1, #To get more accurate results, try changeing this to 3 or 4 (Will take a LONG time tho)
+            num_train_epochs=1, #To get more accurate results, try changing this to 3 or 4 (Will take a LONG time tho)
             weight_decay=0.01,
             eval_strategy="epoch" if eval_ds else "no",
             save_strategy="epoch",
